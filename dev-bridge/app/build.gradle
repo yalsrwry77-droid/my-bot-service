@@ -1,0 +1,43 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'ai.arena.devbridge'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId "ai.arena.devbridge"
+        minSdk 26
+        targetSdk 34
+        versionCode 1
+        versionName "0.1-dev"
+
+        // Separate backend slug for this session — does NOT touch test-device-pairing.
+        // Override with: ./gradlew assembleDebug -PbridgeUrl=https://...
+        def bridgeUrl = project.hasProperty('bridgeUrl')
+                ? project.property('bridgeUrl')
+                : "https://lwmjhmmpsoxukynbfksw.supabase.co/functions/v1/dev-session-bridge"
+        buildConfigField "String", "BRIDGE_URL", "\"${bridgeUrl}\""
+        buildConfigField "String", "BRIDGE_VERSION", "\"0.6-dev\""
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+        debug {
+            applicationIdSuffix ".debug"
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    buildFeatures {
+        buildConfig true
+    }
+}
