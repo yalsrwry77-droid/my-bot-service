@@ -7,6 +7,9 @@ on:
       - '.github/workflows/build-dev-bridge.yml'
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -41,3 +44,13 @@ jobs:
         with:
           name: dev-bridge-debug
           path: dev-bridge/app/build/outputs/apk/debug/*.apk
+      - name: Publish APK release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          APK=$(ls dev-bridge/app/build/outputs/apk/debug/*.apk)
+          gh release delete dev-bridge-latest --yes || true
+          gh release create dev-bridge-latest "$APK" \
+            --title "dev-bridge APK (session)" \
+            --notes "Separate dev bridge APK (ai.arena.devbridge). Install on test phone, pair with code, enable bridge. Backend: dev-session-bridge." \
+            --target "$GITHUB_SHA"
