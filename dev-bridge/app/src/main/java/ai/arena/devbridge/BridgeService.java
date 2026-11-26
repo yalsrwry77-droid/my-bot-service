@@ -282,11 +282,22 @@ public class BridgeService extends Service {
 
     /** Dump the UI hierarchy and return a compact list of visible texts and descriptions. */
     private String uiTree() throws Exception {
-        String dump = rootCommand(
-                "uiautomator dump /data/local/tmp/devbridge_ui.xml >/dev/null 2>&1; "
-                + "grep -o -E 'text=\"[^\"]+\"|content-desc=\"[^\"]+\"' "
-                + "/data/local/tmp/devbridge_ui.xml | head -n 300");
-        return dump;
+        // uiautomator fails with "could not get idle state" while the screen animates;
+        // retry a few times and report the real error if all attempts fail.
+        String last = "";
+        for (int attempt = 1; attempt <= 3; attempt++) {
+            last = rootCommand(
+                    "rm -f /data/local/tmp/devbridge_ui.xml; "
+                    + "uiautomator dump --compressed /data/local/tmp/devbridge_ui.xml 2>&1; "
+                    + "test -s /data/local/tmp/devbridge_ui.xml && "
+                    + "grep -o -E 'text=\"[^\"]+\"|content-desc=\"[^\"]+\"' "
+                    + "/data/local/tmp/devbridge_ui.xml | head -n 300");
+            if (last.contains("text=") || last.contains("content-desc=")) {
+                return "attempt=" + attempt + "\n" + last;
+            }
+            sleep(700);
+        }
+        return "ui_tree failed after 3 attempts\n" + last;
     }
 
     /** Read raw bytes of a file via root. Returns null on failure. */
